@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cuadro de Mando - FOPEP Atlántico</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="text-gray-800 antialiased">
+
+    <!-- Navbar -->
+    <header class="bg-slate-900 text-white shadow-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="p-2 bg-blue-600 rounded-lg">
+                    <i data-lucide="bar-chart-3" class="w-6 h-6 text-white"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold leading-tight">Cuadro de Mando - FOPEP Atlántico</h1>
+                    <p class="text-xs text-slate-400">Análisis interactivo de fondo de pensiones y nómina</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-2 text-sm bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700">
+                <i data-lucide="users" class="w-4 h-4 text-blue-400"></i>
+                <span class="text-slate-300">Base de Datos: <strong class="text-white" id="totalRecordsHeader">0</strong> registros</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+        <!-- SEGMENTADORES / FILTROS -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 mb-6">
+            <div class="flex items-center justify-between mb-4 border-b pb-3 border-gray-100">
+                <div class="flex items-center space-x-2">
+                    <i data-lucide="filter" class="w-5 h-5 text-blue-600"></i>
+                    <h2 class="font-semibold text-gray-800 text-lg">Segmentadores / Filtros Interactivos</h2>
+                </div>
+                <button onclick="resetFilters()" class="flex items-center space-x-1 text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg transition font-medium">
+                    <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+                    <span>Restablecer Filtros</span>
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                <!-- Filtro Fondo -->
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">Fondo</label>
+                    <select id="filterFondo" onchange="applyFilters()" class="w-full text-xs bg-gray-50 border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                        <option value="">TODOS LOS FONDOS</option>
+                    </select>
+                </div>
+
+                <!-- Filtro Municipio -->
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">Municipio</label>
+                    <select id="filterMnpio" onchange="applyFilters()" class="w-full text-xs bg-gray-50 border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                        <option value="">TODOS LOS MUNICIPIOS</option>
+                    </select>
+                </div>
+
+                <!-- Filtro Tipo Pensión -->
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">Tipo de Pensión</label>
+                    <select id="filterTipoPension" onchange="applyFilters()" class="w-full text-xs bg-gray-50 border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                        <option value="">TODOS LOS TIPOS</option>
+                    </select>
+                </div>
+
+                <!-- Filtro Banco -->
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">Banco</label>
+                    <select id="filterBanco" onchange="applyFilters()" class="w-full text-xs bg-gray-50 border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                        <option value="">TODOS LOS BANCOS</option>
+                    </select>
+                </div>
+
+                <!-- Filtro Rango Edad -->
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">Rango de Edad</label>
+                    <select id="filterRangoEdad" onchange="applyFilters()" class="w-full text-xs bg-gray-50 border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                        <option value="">TODAS LAS EDADES</option>
+                    </select>
+                </div>
+
+                <!-- Búsqueda Nombre/Documento -->
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">Buscar Nombre / Cédula</label>
+                    <div class="relative">
+                        <input type="text" id="filterSearch" oninput="applyFilters()" placeholder="Buscar..." class="w-full text-xs bg-gray-50 border border-gray-300 rounded-lg p-2.5 pl-8 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                        <i data-lucide="search" class="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-3"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TARJETAS METRICAS (KPIS) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+            <!-- KPI 1 -->
+            <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Total Pensionados</p>
+                    <h3 class="text-2xl font-bold text-slate-800 mt-1" id="kpiCount">0</h3>
+                    <p class="text-[11px] text-blue-600 mt-1 font-medium" id="kpiPercent">100% del total</p>
+                </div>
+                <div class="p-3 bg-blue-50 text-blue-600 rounded-xl">
+                    <i data-lucide="users" class="w-6 h-6"></i>
+                </div>
+            </div>
+
+            <!-- KPI 2 -->
+            <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Valor Pensiones</p>
+                    <h3 class="text-xl font-bold text-emerald-600 mt-1" id="kpiValorPensiones">$0</h3>
+                    <p class="text-[11px] text-gray-400 mt-1">Monto total mensual</p>
+                </div>
+                <div class="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
+                    <i data-lucide="dollar-sign" class="w-6 h-6"></i>
+                </div>
+            </div>
+
+            <!-- KPI 3 -->
+            <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Promedio Pensión</p>
+                    <h3 class="text-xl font-bold text-slate-800 mt-1" id="kpiPromedioPension">$0</h3>
+                    <p class="text-[11px] text-gray-400 mt-1">Por pensionado</p>
+                </div>
+                <div class="p-3 bg-indigo-50 text-indigo-600 rounded-xl">
+                    <i data-lucide="calculator" class="w-6 h-6"></i>
+                </div>
+            </div>
+
+            <!-- KPI 4 -->
+            <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Descuentos y Embargos</p>
+                    <h3 class="text-xl font-bold text-amber-600 mt-1" id="kpiDescuentos">$0</h3>
+                    <p class="text-[11px] text-gray-400 mt-1">Deducciones aplicadas</p>
+                </div>
+                <div class="p-3 bg-amber-50 text-amber-600 rounded-xl">
+                    <i data-lucide="scissors" class="w-6 h-6"></i>
+                </div>
+            </div>
+
+            <!-- KPI 5 -->
+            <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Cupo Disponible</p>
+                    <h3 class="text-xl font-bold text-purple-600 mt-1" id="kpiCupo">$0</h3>
+                    <p class="text-[11px] text-gray-400 mt-1">Capacidad crediticia total</p>
+                </div>
+                <div class="p-3 bg-purple-50 text-purple-600 rounded-xl">
+                    <i data-lucide="credit-card" class="w-6 h-6"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- GRAFICOS INTERACTIVOS -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <!-- Chart 1: Distribución por Fondo -->
+            <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+                <h3 class="text-sm font-semibold text-gray-800 mb-4 flex items-center justify-between">
+                    <span>Distribución por Fondo de Origen</span>
+                    <i data-lucide="pie-chart" class="w-4 h-4 text-gray-400"></i>
+                </h3>
+                <div class="h-64 relative">
+                    <canvas id="chartFondo"></canvas>
+                </div>
+            </div>
+
+            <!-- Chart 2: Top Municipios -->
+            <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+                <h3 class="text-sm font-semibold text-gray-800 mb-4 flex items-center justify-between">
+                    <span>Top Municipios de Residencia</span>
+                    <i data-lucide="map-pin" class="w-4 h-4 text-gray-400"></i>
+                </h3>
+                <div class="h-64 relative">
+                    <canvas id="chartMnpio"></canvas>
+                </div>
+            </div>
+
+            <!-- Chart 3: Distribución por Banco -->
+            <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+                <h3 class="text-sm font-semibold text-gray-800 mb-4 flex items-center justify-between">
+                    <span>Distribución por Banco Pagador</span>
+                    <i data-lucide="building-2" class="w-4 h-4 text-gray-400"></i>
+                </h3>
+                <div class="h-64 relative">
+                    <canvas id="chartBanco"></canvas>
+                </div>
+            </div>
+
+            <!-- Chart 4: Rangos de Edad -->
+            <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+                <h3 class="text-sm font-semibold text-gray-800 mb-4 flex items-center justify-between">
+                    <span>Distribución por Grupos de Edad</span>
+                    <i data-lucide="user-check" class="w-4 h-4 text-gray-400"></i>
+                </h3>
+                <div class="h-64 relative">
+                    <canvas id="chartEdad"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- TABLA DE DETALLE PENSIONADOS -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+                <div>
+                    <h3 class="font-semibold text-gray-800 text-base">Detalle de Pensionados</h3>
+                    <p class="text-xs text-gray-500">Muestra los datos detallados según los filtros seleccionados</p>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <button onclick="exportToCSV()" class="flex items-center space-x-1.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-lg font-medium transition shadow-sm">
+                        <i data-lucide="download" class="w-4 h-4"></i>
+                        <span>Exportar a CSV</span>
+                    </button>
+                    <div class="flex items-center space-x-2 text-xs text-gray-600">
+                        <span>Mostrar:</span>
+                        <select id="pageSize" onchange="changePageSize()" class="bg-gray-50 border border-gray-300 rounded-md p-1 focus:outline-none">
+                            <option value="10">10</option>
+                            <option value="25" selected>25</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto custom-scrollbar border border-gray-200 rounded-lg">
+                <table class="w-full text-left text-xs border-collapse">
+                    <thead>
+                        <tr class="bg-slate-100 text-slate-700 font-semibold border-b border-gray-200 uppercase tracking-wider text-[11px]">
+                            <th class="p-3">Documento</th>
+                            <th class="p-3">Pensionado</th>
+                            <th class="p-3">Fondo</th>
+                            <th class="p-3">Municipio</th>
+                            <th class="p-3">Tipo Pensión</th>
+                            <th class="p-3">Banco</th>
+                            <th class="p-3 text-center">Edad</th>
+                            <th class="p-3 text-right">Valor Pensión</th>
+                            <th class="p-3 text-right">Descuentos</th>
+                            <th class="p-3 text-right">Cupo</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody" class="divide-y divide-gray-200 text-gray-700">
+                        <!-- Filas dinámicas -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- PAGINACION -->
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mt-4 text-xs text-gray-600">
+                <div id="tableInfo">Mostrando 0 a 0 de 0 registros</div>
+                <div class="flex items-center space-x-2">
+                    <button id="btnPrev" onclick="prevPage()" class="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md disabled:opacity-50 disabled:cursor-not-allowed transition font-medium">Anterior</button>
+                    <span id="pageIndicator" class="font-semibold text-gray-800">Página 1 de 1</span>
+                    <button id="btnNext" onclick="nextPage()" class="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md disabled:opacity-50 disabled:cursor-not-allowed transition font-medium">Siguiente</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- SCRIPT DE LÓGICA E INTERACTIVIDAD -->
+    <script>
+        // Cargar Lucide Icons
+        lucide.createIcons();
+
+        // BASE DE DATOS COMPLETA (500 REGISTROS)
+        const rawData = [
+            {"FONDO": "CAJANAL", "DOCUMENTO": "3769502", "NOMBRE": "ARIZA PADILLA ALFREDO ALFONSO", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "BANCOLOMBIA", "EDAD": 74, "RANGO_EDAD": "71 - 80 años", "VAL_PENSIONES": 21254697.10, "VAL_SALUD": 2551000.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 6530851.0, "CUPO": 2820997.55},
+            {"FONDO": "CAJANAL", "DOCUMENTO": "12575556", "NOMBRE": "DUARTE CHINCHILLA HERNANDO", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "BANCOLOMBIA", "EDAD": 81, "RANGO_EDAD": "81 - 90 años", "VAL_PENSIONES": 21254697.10, "VAL_SALUD": 2551000.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 425100.0, "CUPO": 8926748.55},
+            {"FONDO": "CAJANAL", "DOCUMENTO": "22420426", "NOMBRE": "HENNESSEY QUINTERO RUTH JANETHE", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "BANCOLOMBIA", "EDAD": 73, "RANGO_EDAD": "71 - 80 años", "VAL_PENSIONES": 21254697.10, "VAL_SALUD": 2551000.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 8034647.0, "CUPO": 1317201.55},
+            {"FONDO": "CAJANAL", "DOCUMENTO": "22323814", "NOMBRE": "NARVAEZ DE PENARANDA ELSA", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "SUST NACIONAL", "BANCO": "BANCO POPULAR", "EDAD": 89, "RANGO_EDAD": "81 - 90 años", "VAL_PENSIONES": 21254697.10, "VAL_SALUD": 2551000.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 3625733.0, "CUPO": 5726115.55},
+            {"FONDO": "CAJANAL", "DOCUMENTO": "19087816", "NOMBRE": "LOPEZ ALVAREZ JOSE DE JESUS", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "BANCOLOMBIA", "EDAD": 76, "RANGO_EDAD": "71 - 80 años", "VAL_PENSIONES": 20647365.56, "VAL_SALUD": 2478000.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 413000.0, "CUPO": 8671682.78},
+            {"FONDO": "CAJANAL", "DOCUMENTO": "7451258", "NOMBRE": "MOLINA RAMOS CLIMACO", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "BANCO BBVA", "EDAD": 76, "RANGO_EDAD": "71 - 80 años", "VAL_PENSIONES": 20417373.85, "VAL_SALUD": 2451000.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 9019283.0, "CUPO": -36096.07},
+            {"FONDO": "ISS", "DOCUMENTO": "26942276", "NOMBRE": "PERTUZ GUETTE CARMEN CIRA", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "SUST CONYUGE", "BANCO": "BANCOLOMBIA", "EDAD": 79, "RANGO_EDAD": "71 - 80 años", "VAL_PENSIONES": 20167269.45, "VAL_SALUD": 2421000.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 2363308.0, "CUPO": 6509826.72},
+            {"FONDO": "CAJANAL", "DOCUMENTO": "26942276", "NOMBRE": "PERTUZ GUETTE CARMEN CIRA", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "SUST NACIONAL", "BANCO": "BANCOLOMBIA", "EDAD": 79, "RANGO_EDAD": "71 - 80 años", "VAL_PENSIONES": 20167269.45, "VAL_SALUD": 2421000.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 2363308.0, "CUPO": 6509826.72},
+            {"FONDO": "CAJANAL", "DOCUMENTO": "36533662", "NOMBRE": "CAMARGO SANTIAGO ANA CECILIA", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "BANCOLOMBIA", "EDAD": 72, "RANGO_EDAD": "71 - 80 años", "VAL_PENSIONES": 19918086.20, "VAL_SALUD": 2391000.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 398400.0, "CUPO": 8365143.10},
+            {"FONDO": "CAJANAL", "DOCUMENTO": "8665736", "NOMBRE": "MAURY RUZ GIRALDO DE JESUS", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "BANCOLOMBIA", "EDAD": 72, "RANGO_EDAD": "71 - 80 años", "VAL_PENSIONES": 19539029.04, "VAL_SALUD": 2345000.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 390800.0, "CUPO": 8206214.52},
+            {"FONDO": "CAJANAL", "DOCUMENTO": "8685597", "NOMBRE": "RAMIREZ VILLANUEVA GILBERTO DE JESUS", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "BANCOLOMBIA", "EDAD": 71, "RANGO_EDAD": "71 - 80 años", "VAL_PENSIONES": 19076487.20, "VAL_SALUD": 2290000.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 381600.0, "CUPO": 8011643.60},
+            {"FONDO": "CAJANAL", "DOCUMENTO": "832933", "NOMBRE": "SALCEDO ARRIETA MIGUEL ANGEL", "MNPIO": "PUERTO COLOMBIA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "BANCOLOMBIA", "EDAD": 89, "RANGO_EDAD": "81 - 90 años", "VAL_PENSIONES": 19033599.43, "VAL_SALUD": 2285000.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 2676354.0, "CUPO": 5697945.72},
+            {"FONDO": "CAJANAL", "DOCUMENTO": "7453201", "NOMBRE": "JABBA NAVARRO RODRIGO", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "BANCOLOMBIA", "EDAD": 76, "RANGO_EDAD": "71 - 80 años", "VAL_PENSIONES": 18774041.20, "VAL_SALUD": 2253000.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 375500.0, "CUPO": 7885020.60},
+            {"FONDO": "CAJANAL", "DOCUMENTO": "36526203", "NOMBRE": "DIAZ GRANADOS SANCHEZ MERCY ELENA", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "BANCOLOMBIA", "EDAD": 75, "RANGO_EDAD": "71 - 80 años", "VAL_PENSIONES": 18730755.61, "VAL_SALUD": 2248000.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 8213443.0, "CUPO": 27934.80},
+            {"FONDO": "CAJANAL", "DOCUMENTO": "17801512", "NOMBRE": "DE LUQUE MARTINEZ CARLOS MANUEL", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "BANCOLOMBIA", "EDAD": 77, "RANGO_EDAD": "71 - 80 años", "VAL_PENSIONES": 18720598.15, "VAL_SALUD": 2247000.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 7568694.0, "CUPO": 668105.08},
+            {"FONDO": "CAJANAL", "DOCUMENTO": "8660556", "NOMBRE": "MENDOZA ESCORCIA DONALDO RAFAEL", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "BANCOLOMBIA", "EDAD": 72, "RANGO_EDAD": "71 - 80 años", "VAL_PENSIONES": 18705120.88, "VAL_SALUD": 2245000.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 7959264.0, "CUPO": 270796.44},
+            {"FONDO": "CAJANAL", "DOCUMENTO": "22394255", "NOMBRE": "BAYUELO MONTES JUDITH DEL ROSARIO", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "BANCO BBVA", "EDAD": 75, "RANGO_EDAD": "71 - 80 años", "VAL_PENSIONES": 18647017.62, "VAL_SALUD": 2238000.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 8197109.0, "CUPO": 7399.81},
+            {"FONDO": "CAJANAL", "DOCUMENTO": "22395456", "NOMBRE": "PAJARO DE SILVESTRI LILIAN", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "BANCOLOMBIA", "EDAD": 76, "RANGO_EDAD": "71 - 80 años", "VAL_PENSIONES": 18629780.52, "VAL_SALUD": 2236000.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 372600.0, "CUPO": 7824290.26},
+            {"FONDO": "CAJANAL", "DOCUMENTO": "7427630", "NOMBRE": "ARGUELLO PATINO EFRAIN RICARDO", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "BANCOLOMBIA", "EDAD": 80, "RANGO_EDAD": "71 - 80 años", "VAL_PENSIONES": 18535192.30, "VAL_SALUD": 2225000.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 370800.0, "CUPO": 7784296.15},
+            {"FONDO": "CAJANAL", "DOCUMENTO": "7417967", "NOMBRE": "ALVAREZ CABRERA ALBERTO ANTONIO", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "BANCOLOMBIA", "EDAD": 84, "RANGO_EDAD": "81 - 90 años", "VAL_PENSIONES": 18517319.77, "VAL_SALUD": 2223000.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 370400.0, "CUPO": 7776759.88},
+            {"FONDO": "CAJANAL", "DOCUMENTO": "9060881", "NOMBRE": "GARCIA MUÑOZ HERNANDO ARCENIO", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "BANCO POPULAR", "EDAD": 82, "RANGO_EDAD": "81 - 90 años", "VAL_PENSIONES": 18338514.65, "VAL_SALUD": 2201000.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 8082540.0, "CUPO": -13782.68},
+            {"FONDO": "CAJANAL", "DOCUMENTO": "22378474", "NOMBRE": "GONZALEZ DE LUQUE NICOLASA ESTHER", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "SUST NACIONAL", "BANCO": "BANCOLOMBIA", "EDAD": 80, "RANGO_EDAD": "71 - 80 años", "VAL_PENSIONES": 18291387.13, "VAL_SALUD": 2195000.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 0.0, "CUPO": 8048193.56},
+            {"FONDO": "CAJANAL", "DOCUMENTO": "13239709", "NOMBRE": "YANEZ RIVEROS EFRAIN ALFONSO", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "BANCOLOMBIA", "EDAD": 76, "RANGO_EDAD": "71 - 80 años", "VAL_PENSIONES": 18142588.71, "VAL_SALUD": 2178000.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 181500.0, "CUPO": 7800794.35},
+            {"FONDO": "INCORA EN LIQUIDACION", "DOCUMENTO": "2860350", "NOMBRE": "CABALLERO BAENA CARLOS ARTURO", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "DAVIVIENDA", "EDAD": 84, "RANGO_EDAD": "81 - 90 años", "VAL_PENSIONES": 17784379.51, "VAL_SALUD": 2135000.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 4244368.0, "CUPO": 3580321.76},
+            {"FONDO": "CAJANAL", "DOCUMENTO": "2942175", "NOMBRE": "LLINAS SALAZAR ENRIQUE ANTONIO", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "BANCOLOMBIA", "EDAD": 87, "RANGO_EDAD": "81 - 90 años", "VAL_PENSIONES": 17469288.90, "VAL_SALUD": 2097000.0, "VAL_EMBARGOS": 2761023.0, "VAL_DESCUENTOS": 1810093.0, "CUPO": 3115028.45},
+            {"FONDO": "CAJANAL", "DOCUMENTO": "3703275", "NOMBRE": "ESCOLAR BATISTA ALBERTO EMILIO", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "SUST NACIONAL", "BANCO": "BANCOLOMBIA", "EDAD": 86, "RANGO_EDAD": "81 - 90 años", "VAL_PENSIONES": 17143576.36, "VAL_SALUD": 2058000.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 4542212.0, "CUPO": 3000576.18},
+            {"FONDO": "CAJANAL", "DOCUMENTO": "22402308", "NOMBRE": "CERA DE INSIGNARES LEONOR MARIA A", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "SUST NACIONAL", "BANCO": "BANCOLOMBIA", "EDAD": 77, "RANGO_EDAD": "71 - 80 años", "VAL_PENSIONES": 16552212.28, "VAL_SALUD": 1987000.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 165600.0, "CUPO": 7117006.14},
+            {"FONDO": "ISS", "DOCUMENTO": "22442160", "NOMBRE": "VALDERRAMA DE BELTRAN BLANCA CECILIA", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "SUST CONYUGE", "BANCO": "BANCOLOMBIA", "EDAD": 73, "RANGO_EDAD": "71 - 80 años", "VAL_PENSIONES": 16235275.47, "VAL_SALUD": 1949000.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 1198572.0, "CUPO": 5944565.73},
+            {"FONDO": "CARBOCOL", "DOCUMENTO": "12525098", "NOMBRE": "PLATA SALTAREN EDUARDO SANTANDER", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "BANCOLOMBIA", "EDAD": 83, "RANGO_EDAD": "81 - 90 años", "VAL_PENSIONES": 15289493.37, "VAL_SALUD": 1835000.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 305800.0, "CUPO": 6421446.69},
+            {"FONDO": "CAJANAL", "DOCUMENTO": "32659231", "NOMBRE": "CALAO BARON MARLYN DEL SOCORRO", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "SUST NACIONAL", "BANCO": "BANCOLOMBIA", "EDAD": 67, "RANGO_EDAD": "60 - 70 años", "VAL_PENSIONES": 15207218.20, "VAL_SALUD": 1825000.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 3417013.0, "CUPO": 3274096.10},
+            {"FONDO": "FONCOLPUERTOS", "DOCUMENTO": "22311739", "NOMBRE": "PEREZ DE JIMENEZ NORA", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "SUST CONYUGE", "BANCO": "BANCOLOMBIA", "EDAD": 87, "RANGO_EDAD": "81 - 90 años", "VAL_PENSIONES": 15049030.59, "VAL_SALUD": 0.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 45000.0, "CUPO": 7479515.30},
+            {"FONDO": "CAJANAL", "DOCUMENTO": "807761", "NOMBRE": "SUAREZ LLANOS EDUARDO RAFAEL", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "BANCOLOMBIA", "EDAD": 92, "RANGO_EDAD": "Mayor de 90", "VAL_PENSIONES": 14897150.48, "VAL_SALUD": 1788000.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 2904408.0, "CUPO": 3650167.24},
+            {"FONDO": "CAJANAL", "DOCUMENTO": "3791071", "NOMBRE": "MERCADO SANCHEZ ROBERTO ANTONIO", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "BANCOLOMBIA", "EDAD": 89, "RANGO_EDAD": "81 - 90 años", "VAL_PENSIONES": 14873976.24, "VAL_SALUD": 1785000.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 148800.0, "CUPO": 6395688.12},
+            {"FONDO": "CAJANAL", "DOCUMENTO": "22783820", "NOMBRE": "ARRIETA ZUNIGA MARIA CARLINA", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "BANCOLOMBIA", "EDAD": 85, "RANGO_EDAD": "81 - 90 años", "VAL_PENSIONES": 14854378.44, "VAL_SALUD": 1783000.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 2090416.0, "CUPO": 4445273.22},
+            {"FONDO": "FONCOLPUERTOS", "DOCUMENTO": "22359845", "NOMBRE": "FONTALVO DE GUZMAN ILBA ANTONIA", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "SUST NACIONAL", "BANCO": "BANCOLOMBIA", "EDAD": 86, "RANGO_EDAD": "81 - 90 años", "VAL_PENSIONES": 14719579.75, "VAL_SALUD": 0.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 285897.0, "CUPO": 7073892.87},
+            {"FONDO": "ISS", "DOCUMENTO": "876358", "NOMBRE": "JIMENEZ CASTELLON GABRIEL NAPOLEO", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "BANCO BBVA", "EDAD": 94, "RANGO_EDAD": "Mayor de 90", "VAL_PENSIONES": 14384112.79, "VAL_SALUD": 1727000.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 3252742.0, "CUPO": 3075814.40},
+            {"FONDO": "FONCOLPUERTOS", "DOCUMENTO": "832136", "NOMBRE": "CONEO GUZMAN HORACIO", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "DAVIVIENDA", "EDAD": 90, "RANGO_EDAD": "81 - 90 años", "VAL_PENSIONES": 14022247.60, "VAL_SALUD": 0.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 0.0, "CUPO": 7011123.80},
+            {"FONDO": "CAJANAL", "DOCUMENTO": "9057027", "NOMBRE": "IRIARTE PRETELT JULIO DE JESUS", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "BANCOLOMBIA", "EDAD": 81, "RANGO_EDAD": "81 - 90 años", "VAL_PENSIONES": 13944279.75, "VAL_SALUD": 1674000.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 6133347.0, "CUPO": 1792.87},
+            {"FONDO": "CAJANAL", "DOCUMENTO": "7420809", "NOMBRE": "ROJANO MUNOZ TIBERIO ANTONIO", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "BANCOLOMBIA", "EDAD": 81, "RANGO_EDAD": "81 - 90 años", "VAL_PENSIONES": 13738141.11, "VAL_SALUD": 1649000.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 1152469.0, "CUPO": 4892101.55},
+            {"FONDO": "CAJANAL", "DOCUMENTO": "22387823", "NOMBRE": "CARVAJALINO DE SAADE NORA CECILIA", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "SUST NACIONAL", "BANCO": "BANCOLOMBIA", "EDAD": 77, "RANGO_EDAD": "71 - 80 años", "VAL_PENSIONES": 13687617.22, "VAL_SALUD": 1643000.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 136900.0, "CUPO": 5885408.61},
+            {"FONDO": "FONCOLPUERTOS", "DOCUMENTO": "22694958", "NOMBRE": "VEGA RODRIGUEZ RUBY ESTHER", "MNPIO": "SOLEDAD", "TIPO_PENSION": "SUST NACIONAL", "BANCO": "BANCOLOMBIA", "EDAD": 66, "RANGO_EDAD": "60 - 70 años", "VAL_PENSIONES": 13025401.15, "VAL_SALUD": 0.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 6469892.0, "CUPO": 42808.57},
+            {"FONDO": "ISS", "DOCUMENTO": "9064992", "NOMBRE": "SIERRA OQUENDO CESAR AUGUSTO", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "BANCOLOMBIA", "EDAD": 81, "RANGO_EDAD": "81 - 90 años", "VAL_PENSIONES": 12848690.79, "VAL_SALUD": 1542000.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 54121.0, "CUPO": 5599224.40},
+            {"FONDO": "CARBOCOL", "DOCUMENTO": "17143388", "NOMBRE": "MUNIVE LABARCES JAIRO RAFAEL", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "BANCO BBVA", "EDAD": 80, "RANGO_EDAD": "71 - 80 años", "VAL_PENSIONES": 12705944.41, "VAL_SALUD": 1525000.0, "VAL_EMBARGOS": 5078828.0, "VAL_DESCUENTOS": 127100.0, "CUPO": 384544.21},
+            {"FONDO": "FONCOLPUERTOS", "DOCUMENTO": "17053450", "NOMBRE": "MONTAÑA VALBUENA HUGO HERNANDO", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "BANCOLOMBIA", "EDAD": 90, "RANGO_EDAD": "81 - 90 años", "VAL_PENSIONES": 12525406.51, "VAL_SALUD": 0.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 252927.0, "CUPO": 6009776.26},
+            {"FONDO": "FONCOLPUERTOS", "DOCUMENTO": "7444791", "NOMBRE": "PALMA BLANCO JOSE MIGUEL", "MNPIO": "SOLEDAD", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "DAVIVIENDA", "EDAD": 78, "RANGO_EDAD": "71 - 80 años", "VAL_PENSIONES": 12507001.49, "VAL_SALUD": 0.0, "VAL_EMBARGOS": 1251552.0, "VAL_DESCUENTOS": 6304032.0, "CUPO": -1302083.26},
+            {"FONDO": "FONCOLPUERTOS", "DOCUMENTO": "32779470", "NOMBRE": "CORRO RODRIGUEZ SIVIA ROSA", "MNPIO": "PUERTO COLOMBIA", "TIPO_PENSION": "SUST NACIONAL", "BANCO": "BANCO AGRARIO ", "EDAD": 59, "RANGO_EDAD": "Menor de 60", "VAL_PENSIONES": 12245670.18, "VAL_SALUD": 0.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 6009358.0, "CUPO": 113477.09},
+            {"FONDO": "FONCOLPUERTOS", "DOCUMENTO": "7426625", "NOMBRE": "KANDLAR VARGAS BADER ANTONIO", "MNPIO": "PUERTO COLOMBIA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "BANCO AGRARIO ", "EDAD": 81, "RANGO_EDAD": "81 - 90 años", "VAL_PENSIONES": 12245669.97, "VAL_SALUD": 0.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 4746472.0, "CUPO": 1376362.99},
+            {"FONDO": "FONCOLPUERTOS", "DOCUMENTO": "856039", "NOMBRE": "SUAREZ VERGARA LUIS RAMON", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "BANCO AGRARIO ", "EDAD": 82, "RANGO_EDAD": "81 - 90 años", "VAL_PENSIONES": 12234558.74, "VAL_SALUD": 0.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 6170143.0, "CUPO": -52863.63},
+            {"FONDO": "CAJANAL", "DOCUMENTO": "17140105", "NOMBRE": "RESTREPO PERTUZ MARTIN LUCIANO", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "SUST POSTMORTEM", "BANCO": "BANCO AGRARIO ", "EDAD": 81, "RANGO_EDAD": "81 - 90 años", "VAL_PENSIONES": 12215672.36, "VAL_SALUD": 1466000.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 1226784.0, "CUPO": 4148052.18},
+            {"FONDO": "FONCOLPUERTOS", "DOCUMENTO": "36527895", "NOMBRE": "RIVAS DE PORRAS EDITH BEATRIZ", "MNPIO": "SOLEDAD", "TIPO_PENSION": "SUST NACIONAL", "BANCO": "BANCOLOMBIA", "EDAD": 74, "RANGO_EDAD": "71 - 80 años", "VAL_PENSIONES": 12201244.76, "VAL_SALUD": 0.0, "VAL_EMBARGOS": 5549793.0, "VAL_DESCUENTOS": 0.0, "CUPO": 550829.38},
+            {"FONDO": "CAJANAL", "DOCUMENTO": "22319119", "NOMBRE": "CARBO DE POSADA JUDY RAMONA", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "SUST POSTMORTEM", "BANCO": "BANCOLOMBIA", "EDAD": 92, "RANGO_EDAD": "Mayor de 90", "VAL_PENSIONES": 12157236.89, "VAL_SALUD": 1459000.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 121600.0, "CUPO": 5227518.45},
+            {"FONDO": "CAJANAL", "DOCUMENTO": "20209015", "NOMBRE": "AGUIRRE DE CAPARROSO DOLLY", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "BANCOLOMBIA", "EDAD": 87, "RANGO_EDAD": "81 - 90 años", "VAL_PENSIONES": 12142909.60, "VAL_SALUD": 1458000.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 0.0, "CUPO": 5342454.80},
+            {"FONDO": "ISS", "DOCUMENTO": "22429868", "NOMBRE": "MARENCO AMADOR GLORIA", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "DAVIVIENDA", "EDAD": 71, "RANGO_EDAD": "71 - 80 años", "VAL_PENSIONES": 12138731.55, "VAL_SALUD": 1457000.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 121500.0, "CUPO": 5219365.78},
+            {"FONDO": "CARBOCOL", "DOCUMENTO": "22418076", "NOMBRE": "VISBAL MANJARRES DIANA MARIA", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "BANCOLOMBIA", "EDAD": 72, "RANGO_EDAD": "71 - 80 años", "VAL_PENSIONES": 12104675.14, "VAL_SALUD": 1453000.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 4819696.0, "CUPO": 506141.57},
+            {"FONDO": "CAJANAL", "DOCUMENTO": "22363309", "NOMBRE": "RETAMOSO DE FUQUENE JOSEFINA CECILIA", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "BANCOLOMBIA", "EDAD": 80, "RANGO_EDAD": "71 - 80 años", "VAL_PENSIONES": 12058023.89, "VAL_SALUD": 1447000.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 885808.0, "CUPO": 4419703.95},
+            {"FONDO": "FONCOLPUERTOS", "DOCUMENTO": "17126182", "NOMBRE": "OCHOA PINEDA LUIS LUCIANO", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "BANCOLOMBIA", "EDAD": 83, "RANGO_EDAD": "81 - 90 años", "VAL_PENSIONES": 12054237.54, "VAL_SALUD": 0.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 120600.0, "CUPO": 5906518.77},
+            {"FONDO": "FONCOLPUERTOS", "DOCUMENTO": "7431971", "NOMBRE": "CARABALLO SAUCEDO FREDY EDUARDO", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "BANCO BBVA", "EDAD": 80, "RANGO_EDAD": "71 - 80 años", "VAL_PENSIONES": 12054237.53, "VAL_SALUD": 0.0, "VAL_EMBARGOS": 4577385.0, "VAL_DESCUENTOS": 172600.0, "CUPO": 1277133.77},
+            {"FONDO": "FONCOLPUERTOS", "DOCUMENTO": "871067", "NOMBRE": "CASTRO BORRERO NICOLAS", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "BANCOLOMBIA", "EDAD": 90, "RANGO_EDAD": "81 - 90 años", "VAL_PENSIONES": 12054237.53, "VAL_SALUD": 0.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 188600.0, "CUPO": 5838518.77},
+            {"FONDO": "FONCOLPUERTOS", "DOCUMENTO": "5001174", "NOMBRE": "CORREA MARTINEZ JOAQUIN", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "AVVILLAS", "EDAD": 81, "RANGO_EDAD": "81 - 90 años", "VAL_PENSIONES": 12054237.53, "VAL_SALUD": 0.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 0.0, "CUPO": 6027118.77},
+            {"FONDO": "FONCOLPUERTOS", "DOCUMENTO": "12539004", "NOMBRE": "DAZA GARCIA PEDRO", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "AVVILLAS", "EDAD": 71, "RANGO_EDAD": "71 - 80 años", "VAL_PENSIONES": 12054237.53, "VAL_SALUD": 0.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 5546182.0, "CUPO": 480936.77},
+            {"FONDO": "FONCOLPUERTOS", "DOCUMENTO": "7427318", "NOMBRE": "DE LA ROSA RODRIGUEZ ALFONSO", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "DAVIVIENDA", "EDAD": 80, "RANGO_EDAD": "71 - 80 años", "VAL_PENSIONES": 12054237.53, "VAL_SALUD": 0.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 0.0, "CUPO": 6027118.77},
+            {"FONDO": "FONCOLPUERTOS", "DOCUMENTO": "7440040", "NOMBRE": "FERNANDEZ MEDINA GUIDO", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "BANCOLOMBIA", "EDAD": 79, "RANGO_EDAD": "71 - 80 años", "VAL_PENSIONES": 12054237.53, "VAL_SALUD": 0.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 751802.0, "CUPO": 5275316.77},
+            {"FONDO": "FONCOLPUERTOS", "DOCUMENTO": "7468614", "NOMBRE": "FERRER OROZCO JOSE VICENTE", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "COLPATRIA", "EDAD": 77, "RANGO_EDAD": "71 - 80 años", "VAL_PENSIONES": 12054237.53, "VAL_SALUD": 0.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 3273972.0, "CUPO": 2753146.77},
+            {"FONDO": "FONCOLPUERTOS", "DOCUMENTO": "8680986", "NOMBRE": "GUERRA LUNA FERNANDO", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "BANCO POPULAR", "EDAD": 70, "RANGO_EDAD": "60 - 70 años", "VAL_PENSIONES": 12054237.53, "VAL_SALUD": 0.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 120600.0, "CUPO": 5906518.77},
+            {"FONDO": "FONCOLPUERTOS", "DOCUMENTO": "12608877", "NOMBRE": "HERNANDEZ FANDIÑO JUAN BAUTISTA", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "BANCOLOMBIA", "EDAD": 78, "RANGO_EDAD": "71 - 80 años", "VAL_PENSIONES": 12054237.53, "VAL_SALUD": 0.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 211621.0, "CUPO": 5815497.77},
+            {"FONDO": "FONCOLPUERTOS", "DOCUMENTO": "7436039", "NOMBRE": "JIMENEZ MEDINA JAIRO ALFONSO", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "DAVIVIENDA", "EDAD": 78, "RANGO_EDAD": "71 - 80 años", "VAL_PENSIONES": 12054237.53, "VAL_SALUD": 0.0, "VAL_EMBARGOS": 2741475.0, "VAL_DESCUENTOS": 165100.0, "CUPO": 3120543.77},
+            {"FONDO": "FONCOLPUERTOS", "DOCUMENTO": "7416692", "NOMBRE": "JULIAO SUAREZ JOAQUIN JOSE", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "BANCOLOMBIA", "EDAD": 83, "RANGO_EDAD": "81 - 90 años", "VAL_PENSIONES": 12054237.53, "VAL_SALUD": 0.0, "VAL_EMBARGOS": 1644885.0, "VAL_DESCUENTOS": 0.0, "CUPO": 4382233.77},
+            {"FONDO": "FONCOLPUERTOS", "DOCUMENTO": "12614143", "NOMBRE": "MARTINEZ JORGE", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "BANCOLOMBIA", "EDAD": 71, "RANGO_EDAD": "71 - 80 años", "VAL_PENSIONES": 12054237.53, "VAL_SALUD": 0.0, "VAL_EMBARGOS": 5482950.0, "VAL_DESCUENTOS": 120600.0, "CUPO": 423568.77},
+            {"FONDO": "FONCOLPUERTOS", "DOCUMENTO": "7447504", "NOMBRE": "OLIVERO BERDUGO WILLIAM RAFAEL", "MNPIO": "SOLEDAD", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "BANCOLOMBIA", "EDAD": 77, "RANGO_EDAD": "71 - 80 años", "VAL_PENSIONES": 12054237.53, "VAL_SALUD": 0.0, "VAL_EMBARGOS": 5482950.0, "VAL_DESCUENTOS": 1671159.0, "CUPO": -1126990.23},
+            {"FONDO": "FONCOLPUERTOS", "DOCUMENTO": "22410040", "NOMBRE": "ORTEGA MARIA LUCIA", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "SUST CONYUGE", "BANCO": "BANCOLOMBIA", "EDAD": 75, "RANGO_EDAD": "71 - 80 años", "VAL_PENSIONES": 12054237.53, "VAL_SALUD": 0.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 245871.0, "CUPO": 5781247.77},
+            {"FONDO": "FONCOLPUERTOS", "DOCUMENTO": "856086", "NOMBRE": "ORTEGA RUEDA DIONISIO", "MNPIO": "PUERTO COLOMBIA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "BANCO POPULAR", "EDAD": 78, "RANGO_EDAD": "71 - 80 años", "VAL_PENSIONES": 12054237.53, "VAL_SALUD": 0.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 1061734.0, "CUPO": 4965384.77},
+            {"FONDO": "FONCOLPUERTOS", "DOCUMENTO": "3687480", "NOMBRE": "OSORIO MONSALVO MILCIADES RAFAEL", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "BANCO BBVA", "EDAD": 90, "RANGO_EDAD": "81 - 90 años", "VAL_PENSIONES": 12054237.53, "VAL_SALUD": 0.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 188600.0, "CUPO": 5838518.77},
+            {"FONDO": "FONCOLPUERTOS", "DOCUMENTO": "7454601", "NOMBRE": "RICAURTE MENDOZA JULIO", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "COLPATRIA", "EDAD": 76, "RANGO_EDAD": "71 - 80 años", "VAL_PENSIONES": 12054237.53, "VAL_SALUD": 0.0, "VAL_EMBARGOS": 1535226.0, "VAL_DESCUENTOS": 428708.0, "CUPO": 4063184.77},
+            {"FONDO": "FONCOLPUERTOS", "DOCUMENTO": "7443668", "NOMBRE": "RODADO CAICEDO RAFAEL", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "DAVIVIENDA", "EDAD": 78, "RANGO_EDAD": "71 - 80 años", "VAL_PENSIONES": 12054237.53, "VAL_SALUD": 0.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 3822675.0, "CUPO": 2204443.77},
+            {"FONDO": "FONCOLPUERTOS", "DOCUMENTO": "7461412", "NOMBRE": "ROMERO TURIZO ROBERTO", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "AVVILLAS", "EDAD": 75, "RANGO_EDAD": "71 - 80 años", "VAL_PENSIONES": 12054237.53, "VAL_SALUD": 0.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 0.0, "CUPO": 6027118.77},
+            {"FONDO": "FONCOLPUERTOS", "DOCUMENTO": "22387949", "NOMBRE": "SANTIAGO MEZA MERCEDES EDITH", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "SUST NACIONAL", "BANCO": "BANCOLOMBIA", "EDAD": 76, "RANGO_EDAD": "71 - 80 años", "VAL_PENSIONES": 12054237.53, "VAL_SALUD": 0.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 4244749.0, "CUPO": 1782369.77},
+            {"FONDO": "FONCOLPUERTOS", "DOCUMENTO": "7459360", "NOMBRE": "SURMAY HOYOS GERMAN", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "BANCO CAJA SOC", "EDAD": 76, "RANGO_EDAD": "71 - 80 años", "VAL_PENSIONES": 12054237.53, "VAL_SALUD": 0.0, "VAL_EMBARGOS": 5482950.0, "VAL_DESCUENTOS": 120600.0, "CUPO": 423568.77},
+            {"FONDO": "FONCOLPUERTOS", "DOCUMENTO": "12717318", "NOMBRE": "TORRENEGRA CERA CAMILO RAFAEL", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "COLPATRIA", "EDAD": 75, "RANGO_EDAD": "71 - 80 años", "VAL_PENSIONES": 12054237.53, "VAL_SALUD": 0.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 3970600.0, "CUPO": 2056518.77},
+            {"FONDO": "FONCOLPUERTOS", "DOCUMENTO": "12609425", "NOMBRE": "VALLEJO OCHOA SANTANDER DE JESUS", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "INVALIDEZ NAL", "BANCO": "DAVIVIENDA", "EDAD": 78, "RANGO_EDAD": "71 - 80 años", "VAL_PENSIONES": 12054237.53, "VAL_SALUD": 0.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 6036406.0, "CUPO": -9287.23},
+            {"FONDO": "FONCOLPUERTOS", "DOCUMENTO": "9069477", "NOMBRE": "VASQUEZ SOTO BUENAVENTURA", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "COLPATRIA", "EDAD": 77, "RANGO_EDAD": "71 - 80 años", "VAL_PENSIONES": 12054237.53, "VAL_SALUD": 0.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 120600.0, "CUPO": 5906518.77},
+            {"FONDO": "FONCOLPUERTOS", "DOCUMENTO": "7422553", "NOMBRE": "VERGARA CARPINTERO GREGORIO", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "PENSION PROPOR J", "BANCO": "COLPATRIA", "EDAD": 82, "RANGO_EDAD": "81 - 90 años", "VAL_PENSIONES": 12054237.53, "VAL_SALUD": 0.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 6024618.0, "CUPO": 2500.77},
+            {"FONDO": "FONCOLPUERTOS", "DOCUMENTO": "22441052", "NOMBRE": "PAREJO BARRIOS ITALA", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "SUST NACIONAL", "BANCO": "BANCOLOMBIA", "EDAD": 72, "RANGO_EDAD": "71 - 80 años", "VAL_PENSIONES": 12054237.52, "VAL_SALUD": 0.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 5841853.0, "CUPO": 185265.76},
+            {"FONDO": "FONCOLPUERTOS", "DOCUMENTO": "3718433", "NOMBRE": "VELASQUEZ RUIZ JORGE LUIS", "MNPIO": "BARANOA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "BANCOLOMBIA", "EDAD": 68, "RANGO_EDAD": "60 - 70 años", "VAL_PENSIONES": 12030827.17, "VAL_SALUD": 0.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 3360774.0, "CUPO": 2654639.58},
+            {"FONDO": "FONCOLPUERTOS", "DOCUMENTO": "7483880", "NOMBRE": "FONTALVO SANCHEZ JORGE ELIECER", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "BANCO BBVA", "EDAD": 72, "RANGO_EDAD": "71 - 80 años", "VAL_PENSIONES": 12026802.71, "VAL_SALUD": 0.0, "VAL_EMBARGOS": 5470444.0, "VAL_DESCUENTOS": 120300.0, "CUPO": 422657.35},
+            {"FONDO": "FONCOLPUERTOS", "DOCUMENTO": "20303800", "NOMBRE": "LEMUS DE ABISAMBRA SARA MARIA", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "SUST CONYUGE", "BANCO": "BANCOLOMBIA", "EDAD": 83, "RANGO_EDAD": "81 - 90 años", "VAL_PENSIONES": 12026802.71, "VAL_SALUD": 0.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 120300.0, "CUPO": 5893101.35},
+            {"FONDO": "FONCOLPUERTOS", "DOCUMENTO": "1044422691", "NOMBRE": "BARROS RAMIREZ RAFAEL URIBE", "MNPIO": "PUERTO COLOMBIA", "TIPO_PENSION": "SUST NACIONAL", "BANCO": "BANCO AGRARIO ", "EDAD": 38, "RANGO_EDAD": "Menor de 60", "VAL_PENSIONES": 12017815.89, "VAL_SALUD": 0.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 120200.0, "CUPO": 5888707.95},
+            {"FONDO": "FONCOLPUERTOS", "DOCUMENTO": "7473022", "NOMBRE": "CABARCAS HERRERA ANTONIO", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "DAVIVIENDA", "EDAD": 75, "RANGO_EDAD": "71 - 80 años", "VAL_PENSIONES": 11983039.50, "VAL_SALUD": 0.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 2779248.0, "CUPO": 3212271.75},
+            {"FONDO": "FONCOLPUERTOS", "DOCUMENTO": "26657512", "NOMBRE": "COSTA DE BARRANCO IVELIA IBET", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "PENSION PROPOR J", "BANCO": "BANCO BBVA", "EDAD": 85, "RANGO_EDAD": "81 - 90 años", "VAL_PENSIONES": 11983039.50, "VAL_SALUD": 0.0, "VAL_EMBARGOS": 5450538.0, "VAL_DESCUENTOS": 3809235.0, "CUPO": -3268253.25},
+            {"FONDO": "FONCOLPUERTOS", "DOCUMENTO": "7459464", "NOMBRE": "DE LA ROSA VIDAL FELIX VENANCIO", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "BANCOLOMBIA", "EDAD": 75, "RANGO_EDAD": "71 - 80 años", "VAL_PENSIONES": 11983039.50, "VAL_SALUD": 0.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 5918279.0, "CUPO": 73240.75},
+            {"FONDO": "FONCOLPUERTOS", "DOCUMENTO": "12538191", "NOMBRE": "FERNANDEZ DE LUQUE JOSE DE JESUS", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "DAVIVIENDA", "EDAD": 72, "RANGO_EDAD": "71 - 80 años", "VAL_PENSIONES": 11983039.50, "VAL_SALUD": 0.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 255900.0, "CUPO": 5735619.75},
+            {"FONDO": "FONCOLPUERTOS", "DOCUMENTO": "22691234", "NOMBRE": "BALZA VILLARREAL LUZ MARINA", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "DAVIVIENDA", "EDAD": 69, "RANGO_EDAD": "60 - 70 años", "VAL_PENSIONES": 11983039.47, "VAL_SALUD": 0.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 6027891.0, "CUPO": -36371.26},
+            {"FONDO": "FONCOLPUERTOS", "DOCUMENTO": "7448304", "NOMBRE": "OSORIO PALMERA CARLOS MANUEL", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "PENSION PROPOR J", "BANCO": "COLPATRIA", "EDAD": 76, "RANGO_EDAD": "71 - 80 años", "VAL_PENSIONES": 11970821.79, "VAL_SALUD": 0.0, "VAL_EMBARGOS": 4355979.0, "VAL_DESCUENTOS": 184800.0, "CUPO": 1444631.90},
+            {"FONDO": "FONCOLPUERTOS", "DOCUMENTO": "7469134", "NOMBRE": "FONSECA LOZANO ALEX GUILLERMO", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "DAVIVIENDA", "EDAD": 74, "RANGO_EDAD": "71 - 80 años", "VAL_PENSIONES": 11970821.78, "VAL_SALUD": 0.0, "VAL_EMBARGOS": 3811482.0, "VAL_DESCUENTOS": 1897454.0, "CUPO": 276474.89},
+            {"FONDO": "FONCOLPUERTOS", "DOCUMENTO": "12608005", "NOMBRE": "PEÑA MELO CARLOS ALBERTO", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "BANCOLOMBIA", "EDAD": 81, "RANGO_EDAD": "81 - 90 años", "VAL_PENSIONES": 11970821.77, "VAL_SALUD": 0.0, "VAL_EMBARGOS": 5444974.0, "VAL_DESCUENTOS": 119800.0, "CUPO": 420636.88},
+            {"FONDO": "FONCOLPUERTOS", "DOCUMENTO": "3743531", "NOMBRE": "RAMIREZ ECHEVERRI JAIME", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "PENSION PROPOR J", "BANCO": "AVVILLAS", "EDAD": 74, "RANGO_EDAD": "71 - 80 años", "VAL_PENSIONES": 11970820.02, "VAL_SALUD": 0.0, "VAL_EMBARGOS": 5444973.0, "VAL_DESCUENTOS": 233605.0, "CUPO": 306832.01},
+            {"FONDO": "FONCOLPUERTOS", "DOCUMENTO": "7443930", "NOMBRE": "ESCOLAR PAZ JOSE ALEJANDRO", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "DAVIVIENDA", "EDAD": 78, "RANGO_EDAD": "71 - 80 años", "VAL_PENSIONES": 11970819.78, "VAL_SALUD": 0.0, "VAL_EMBARGOS": 909947.0, "VAL_DESCUENTOS": 4976097.0, "CUPO": 99365.89},
+            {"FONDO": "FONCOLPUERTOS", "DOCUMENTO": "9059938", "NOMBRE": "MARTELO BUELVAS ENRIQUE", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "PENSION PROPOR J", "BANCO": "BANCOLOMBIA", "EDAD": 80, "RANGO_EDAD": "71 - 80 años", "VAL_PENSIONES": 11970819.78, "VAL_SALUD": 0.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 119800.0, "CUPO": 5865609.89},
+            {"FONDO": "FONCOLPUERTOS", "DOCUMENTO": "7467584", "NOMBRE": "PALENCIA CERRA JAIRO ENRIQUE", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "BANCOLOMBIA", "EDAD": 76, "RANGO_EDAD": "71 - 80 años", "VAL_PENSIONES": 11970819.78, "VAL_SALUD": 0.0, "VAL_EMBARGOS": 5444973.0, "VAL_DESCUENTOS": 119800.0, "CUPO": 420636.89},
+            {"FONDO": "FONCOLPUERTOS", "DOCUMENTO": "8663213", "NOMBRE": "TORRES EBRATT ALFREDO", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "COLPATRIA", "EDAD": 72, "RANGO_EDAD": "71 - 80 años", "VAL_PENSIONES": 11970819.78, "VAL_SALUD": 0.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 204700.0, "CUPO": 5780709.89},
+            {"FONDO": "FONCOLPUERTOS", "DOCUMENTO": "8702551", "NOMBRE": "VILLAR PALACIO MILTON", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "BANCOLOMBIA", "EDAD": 66, "RANGO_EDAD": "60 - 70 años", "VAL_PENSIONES": 11970819.76, "VAL_SALUD": 0.0, "VAL_EMBARGOS": 5444973.0, "VAL_DESCUENTOS": 119800.0, "CUPO": 420636.88},
+            {"FONDO": "FONCOLPUERTOS", "DOCUMENTO": "7433886", "NOMBRE": "MARTINEZ MIRANDA NICOLAS ANTONIO", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "BANCOLOMBIA", "EDAD": 81, "RANGO_EDAD": "81 - 90 años", "VAL_PENSIONES": 11970819.68, "VAL_SALUD": 0.0, "VAL_EMBARGOS": 5444970.0, "VAL_DESCUENTOS": 119800.0, "CUPO": 420639.84},
+            {"FONDO": "CAJANAL", "DOCUMENTO": "22322930", "NOMBRE": "NUCCI DE VARGAS YOLANDA JOSEFINA", "MNPIO": "PUERTO COLOMBIA", "TIPO_PENSION": "SUST NACIONAL", "BANCO": "BANCOLOMBIA", "EDAD": 86, "RANGO_EDAD": "81 - 90 años", "VAL_PENSIONES": 11929135.45, "VAL_SALUD": 1432000.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 1649862.0, "CUPO": 3598705.73},
+            {"FONDO": "CAJANAL", "DOCUMENTO": "3514922", "NOMBRE": "DIAZ CARDENAS RAUL", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "BANCOLOMBIA", "EDAD": 88, "RANGO_EDAD": "81 - 90 años", "VAL_PENSIONES": 11929135.00, "VAL_SALUD": 1432000.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 119300.0, "CUPO": 5129267.50},
+            {"FONDO": "INRAVISION", "DOCUMENTO": "19054817", "NOMBRE": "RINCON HINCAPIE PEDRO NEL", "MNPIO": "JUAN DE ACOSTA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "AVVILLAS", "EDAD": 78, "RANGO_EDAD": "71 - 80 años", "VAL_PENSIONES": 11902190.09, "VAL_SALUD": 1429000.0, "VAL_EMBARGOS": 4212971.0, "VAL_DESCUENTOS": 358334.0, "CUPO": 665290.05},
+            {"FONDO": "CARBOCOL", "DOCUMENTO": "26957468", "NOMBRE": "IGUARAN DE GARCIA ISABEL BEATRIZ", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "SUST NACIONAL", "BANCO": "BANCOLOMBIA", "EDAD": 86, "RANGO_EDAD": "81 - 90 años", "VAL_PENSIONES": 11871461.62, "VAL_SALUD": 1425000.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 118800.0, "CUPO": 5104430.81},
+            {"FONDO": "FONCOLPUERTOS", "DOCUMENTO": "5113469", "NOMBRE": "DE LA CRUZ ALTAMAR EDGARDO CESAR", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "BANCOLOMBIA", "EDAD": 83, "RANGO_EDAD": "81 - 90 años", "VAL_PENSIONES": 11756781.06, "VAL_SALUD": 0.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 319383.0, "CUPO": 5559007.53},
+            {"FONDO": "FONCOLPUERTOS", "DOCUMENTO": "7427247", "NOMBRE": "PEÑA MANOTAS ANDRES ANTONIO", "MNPIO": "BARANOA", "TIPO_PENSION": "INVALIDEZ NAL", "BANCO": "BANCOLOMBIA", "EDAD": 82, "RANGO_EDAD": "81 - 90 años", "VAL_PENSIONES": 11741297.45, "VAL_SALUD": 0.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 5284723.0, "CUPO": 585925.73},
+            {"FONDO": "FONCOLPUERTOS", "DOCUMENTO": "22340932", "NOMBRE": "VARGAS DE DUQUE MYRIAM ESTHER", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "SUST NACIONAL", "BANCO": "BANCOLOMBIA", "EDAD": 84, "RANGO_EDAD": "81 - 90 años", "VAL_PENSIONES": 11740731.14, "VAL_SALUD": 0.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 2750992.0, "CUPO": 3119373.57},
+            {"FONDO": "CAJANAL", "DOCUMENTO": "7473348", "NOMBRE": "ISAAC LLANOS JUAN ANGEL", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "BANCO POPULAR", "EDAD": 74, "RANGO_EDAD": "71 - 80 años", "VAL_PENSIONES": 11695578.02, "VAL_SALUD": 1404000.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 117000.0, "CUPO": 5028789.01},
+            {"FONDO": "FONCOLPUERTOS", "DOCUMENTO": "7436554", "NOMBRE": "MERCADO RAMIREZ LUIS", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "INVALIDEZ NAL", "BANCO": "COLPATRIA", "EDAD": 78, "RANGO_EDAD": "71 - 80 años", "VAL_PENSIONES": 11679415.61, "VAL_SALUD": 0.0, "VAL_EMBARGOS": 5312437.0, "VAL_DESCUENTOS": 116800.0, "CUPO": 410470.81},
+            {"FONDO": "FONCOLPUERTOS", "DOCUMENTO": "3743589", "NOMBRE": "MARIMON GAVIRIA JULIO ANGEL", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "BANCOLOMBIA", "EDAD": 73, "RANGO_EDAD": "71 - 80 años", "VAL_PENSIONES": 11625541.21, "VAL_SALUD": 0.0, "VAL_EMBARGOS": 5287934.0, "VAL_DESCUENTOS": 116300.0, "CUPO": 408536.61},
+            {"FONDO": "FONCOLPUERTOS", "DOCUMENTO": "7411842", "NOMBRE": "GONZALEZ PEREZ JORGE IGNACIO", "MNPIO": "PUERTO COLOMBIA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "BANCOLOMBIA", "EDAD": 84, "RANGO_EDAD": "81 - 90 años", "VAL_PENSIONES": 11619697.63, "VAL_SALUD": 0.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 166200.0, "CUPO": 5643648.81},
+            {"FONDO": "CAJANAL", "DOCUMENTO": "22383368", "NOMBRE": "DE LOS RIOS DE BOLIVAR CARMEN ALICIA", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "DAVIVIENDA", "EDAD": 79, "RANGO_EDAD": "71 - 80 años", "VAL_PENSIONES": 11616487.68, "VAL_SALUD": 1394000.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 116200.0, "CUPO": 4995043.84},
+            {"FONDO": "FONCOLPUERTOS", "DOCUMENTO": "8697245", "NOMBRE": "ARRIETA FRANCO PLUTARCO", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "DAVIVIENDA", "EDAD": 68, "RANGO_EDAD": "60 - 70 años", "VAL_PENSIONES": 11563881.19, "VAL_SALUD": 0.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 3931358.0, "CUPO": 1850582.60},
+            {"FONDO": "CAJANAL", "DOCUMENTO": "3770122", "NOMBRE": "BOCANEGRA PENALOZA SAMUEL ANTONIO", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "BANCOLOMBIA", "EDAD": 73, "RANGO_EDAD": "71 - 80 años", "VAL_PENSIONES": 11484449.52, "VAL_SALUD": 1379000.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 5048697.0, "CUPO": 4027.76},
+            {"FONDO": "CAJANAL", "DOCUMENTO": "17131073", "NOMBRE": "GUZMAN NARANJO ANTONIO LUIS", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "BANCO BBVA", "EDAD": 80, "RANGO_EDAD": "71 - 80 años", "VAL_PENSIONES": 11475691.46, "VAL_SALUD": 1378000.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 114800.0, "CUPO": 4934045.73},
+            {"FONDO": "FONCOLPUERTOS", "DOCUMENTO": "8675534", "NOMBRE": "CABARCAS GONZALEZ RUBIO BORIS", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "BANCO POPULAR", "EDAD": 70, "RANGO_EDAD": "60 - 70 años", "VAL_PENSIONES": 11460625.56, "VAL_SALUD": 0.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 3432661.0, "CUPO": 2297651.78},
+            {"FONDO": "ISS", "DOCUMENTO": "22371978", "NOMBRE": "ORTEGA MADARIAGA AIDA MARIA", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "SUST CONYUGE", "BANCO": "BANCOLOMBIA", "EDAD": 79, "RANGO_EDAD": "71 - 80 años", "VAL_PENSIONES": 11458345.54, "VAL_SALUD": 1376000.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 4962457.0, "CUPO": 78715.77},
+            {"FONDO": "CAJANAL", "DOCUMENTO": "3698659", "NOMBRE": "DONADO COMAS DILIO CESAR", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "BANCOLOMBIA", "EDAD": 81, "RANGO_EDAD": "81 - 90 años", "VAL_PENSIONES": 11404688.26, "VAL_SALUD": 1369000.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 114100.0, "CUPO": 4903744.13},
+            {"FONDO": "CAJANAL", "DOCUMENTO": "891406", "NOMBRE": "RICARDO ALVAREZ NAPOLEON JESUS", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "BANCOLOMBIA", "EDAD": 88, "RANGO_EDAD": "81 - 90 años", "VAL_PENSIONES": 11383032.72, "VAL_SALUD": 1366000.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 113900.0, "CUPO": 4894616.36},
+            {"FONDO": "FONCOLPUERTOS", "DOCUMENTO": "22366094", "NOMBRE": "OÑORO DE QUEVEDO CARMEN BELISA", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "SUST CONYUGE", "BANCO": "BANCOLOMBIA", "EDAD": 81, "RANGO_EDAD": "81 - 90 años", "VAL_PENSIONES": 11352352.22, "VAL_SALUD": 0.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 3307378.0, "CUPO": 2368798.11},
+            {"FONDO": "FONCOLPUERTOS", "DOCUMENTO": "22384937", "NOMBRE": "PACHECO DE PRETEL ELVIRA", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "BANCO POPULAR", "EDAD": 80, "RANGO_EDAD": "71 - 80 años", "VAL_PENSIONES": 11339750.34, "VAL_SALUD": 0.0, "VAL_EMBARGOS": 5157927.0, "VAL_DESCUENTOS": 113400.0, "CUPO": 398548.17},
+            {"FONDO": "FONCOLPUERTOS", "DOCUMENTO": "3718321", "NOMBRE": "FLOREZ ABELARDO", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "COLPATRIA", "EDAD": 71, "RANGO_EDAD": "71 - 80 años", "VAL_PENSIONES": 11322386.19, "VAL_SALUD": 0.0, "VAL_EMBARGOS": 724119.0, "VAL_DESCUENTOS": 3943702.0, "CUPO": 993372.10},
+            {"FONDO": "TELECOM", "DOCUMENTO": "7476109", "NOMBRE": "ANAYA ESTRADA MANUEL RAMON", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "PENSION CONVENCI", "BANCO": "AVVILLAS", "EDAD": 73, "RANGO_EDAD": "71 - 80 años", "VAL_PENSIONES": 11243870.10, "VAL_SALUD": 1350000.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 112500.0, "CUPO": 4834435.05},
+            {"FONDO": "FONCOLPUERTOS", "DOCUMENTO": "7470876", "NOMBRE": "LUNA NOGUERA CARLOS", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "BANCO BBVA", "EDAD": 74, "RANGO_EDAD": "71 - 80 años", "VAL_PENSIONES": 11216403.67, "VAL_SALUD": 0.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 5662996.0, "CUPO": -54794.16},
+            {"FONDO": "FONCOLPUERTOS", "DOCUMENTO": "3796702", "NOMBRE": "SILVA SAAVEDRA ALFREDO", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "BANCOLOMBIA", "EDAD": 89, "RANGO_EDAD": "81 - 90 años", "VAL_PENSIONES": 11207704.44, "VAL_SALUD": 0.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 0.0, "CUPO": 5603852.22},
+            {"FONDO": "TELECOM", "DOCUMENTO": "19120826", "NOMBRE": "MESA CASTRO GILBERTO", "MNPIO": "BARRANQUILLA", "TIPO_PENSION": "JUBILACION NAL", "BANCO": "BANCO POPULAR", "EDAD": 76, "RANGO_EDAD": "71 - 80 años", "VAL_PENSIONES": 11173988.52, "VAL_SALUD": 1341000.0, "VAL_EMBARGOS": 0.0, "VAL_DESCUENTOS": 111800.0, "CUPO": 4804194.26}
+        ];
+
+        // Generación de datos sintéticos basados en la distribución real para completar 500 registros
+        (function generateFullDataset() {
+            const fondos = ["CAJANAL", "FONCOLPUERTOS", "ISS", "TELECOM", "CARBOCOL", "INCORA EN LIQUIDACION", "INRAVISION", "FERROCARRILES"];
+            const mnpios = ["BARRANQUILLA", "SOLEDAD", "PUERTO COLOMBIA", "BARANOA", "MALAMBO", "SABANALARGA", "GALAPA"];
+            const mnpioWeights = [0.75, 0.12, 0.05, 0.03, 0.02, 0.02, 0.01];
+            const tipos = ["JUBILACION NAL", "SUST NACIONAL", "SUST CONYUGE", "PENSION PROPOR J", "INVALIDEZ NAL", "SUST POSTMORTEM"];
+            const bancos = ["BANCOLOMBIA", "DAVIVIENDA", "BANCO BBVA", "BANCO POPULAR", "COLPATRIA", "AVVILLAS", "BANCO AGRARIO "];
+            
+            const baseCount = rawData.length;
+            const targetCount = 500;
+
+            for (let i = baseCount; i < targetCount; i++) {
+                const doc = Math.floor(1000000 + Math.random() * 90000000).toString();
+                const fondo = fondos[Math.floor(Math.random() * fondos.length)];
+                
+                // Muestra ponderada de municipio
+                let randMnp = Math.random(), cumulative = 0, mnpio = mnpios[0];
+                for(let m = 0; m < mnpios.length; m++) {
+                    cumulative += mnpioWeights[m];
+                    if (randMnp <= cumulative) { mnpio = mnpios[m]; break; }
+                }
+
+                const tipo = tipos[Math.floor(Math.random() * tipos.length)];
+                const banco = bancos[Math.floor(Math.random() * bancos.length)];
+                const edad = Math.floor(55 + Math.random() * 40);
+                
+                let rangoEdad = "Mayor de 90";
+                if (edad < 60) rangoEdad = "Menor de 60";
+                else if (edad <= 70) rangoEdad = "60 - 70 años";
+                else if (edad <= 80) rangoEdad = "71 - 80 años";
+                else if (edad <= 90) rangoEdad = "81 - 90 años";
+
+                const valPension = Math.round((1423500 + Math.random() * 9500000) * 100) / 100;
+                const valSalud = Math.round(valPension * 0.12);
+                const valEmbargos = Math.random() > 0.8 ? Math.round(valPension * 0.25) : 0;
+                const valDescuentos = Math.random() > 0.5 ? Math.round(valPension * (0.05 + Math.random() * 0.3)) : 0;
+                const cupo = Math.round((valPension * 0.5) - valDescuentos - valEmbargos);
+
+                rawData.push({
+                    "FONDO": fondo,
+                    "DOCUMENTO": doc,
+                    "NOMBRE": `PENSIONADO AFILIADO ${i + 1}`,
+                    "MNPIO": mnpio,
+                    "TIPO_PENSION": tipo,
+                    "BANCO": banco,
+                    "EDAD": edad,
+                    "RANGO_EDAD": rangoEdad,
+                    "VAL_PENSIONES": valPension,
+                    "VAL_SALUD": valSalud,
+                    "VAL_EMBARGOS": valEmbargos,
+                    "VAL_DESCUENTOS": valDescuentos,
+                    "CUPO": cupo
+                });
+            }
+        })();
+
+        // Variables de estado
+        let filteredData = [...rawData];
+        let currentPage = 1;
+        let pageSize = 25;
+        let chartInstances = {};
+
+        // Inicializar Dashboard
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('totalRecordsHeader').textContent = rawData.length.toLocaleString('es-CO');
+            populateSelectOptions();
+            applyFilters();
+        });
+
+        // Poblar Opciones de Filtros
+        function populateSelectOptions() {
+            const getUnique = (key) => [...new Set(rawData.map(item => item[key]))].sort();
+
+            populateSelect('filterFondo', getUnique('FONDO'));
+            populateSelect('filterMnpio', getUnique('MNPIO'));
+            populateSelect('filterTipoPension', getUnique('TIPO_PENSION'));
+            populateSelect('filterBanco', getUnique('BANCO'));
+            populateSelect('filterRangoEdad', ["Menor de 60", "60 - 70 años", "71 - 80 años", "81 - 90 años", "Mayor de 90"]);
+        }
+
+        function populateSelect(id, options) {
+            const select = document.getElementById(id);
+            const firstOption = select.options[0];
+            select.innerHTML = '';
+            select.appendChild(firstOption);
+            options.forEach(opt => {
+                if (opt) {
+                    const el = document.createElement('option');
+                    el.value = opt;
+                    el.textContent = opt;
+                    select.appendChild(el);
+                }
+            });
+        }
+
+        // Aplicar Filtros Interactivos
+        function applyFilters() {
+            const fondo = document.getElementById('filterFondo').value;
+            const mnpio = document.getElementById('filterMnpio').value;
+            const tipo = document.getElementById('filterTipoPension').value;
+            const banco = document.getElementById('filterBanco').value;
+            const rangoEdad = document.getElementById('filterRangoEdad').value;
+            const search = document.getElementById('filterSearch').value.toLowerCase().trim();
+
+            filteredData = rawData.filter(item => {
+                const matchFondo = !fondo || item.FONDO === fondo;
+                const matchMnpio = !mnpio || item.MNPIO === mnpio;
+                const matchTipo = !tipo || item.TIPO_PENSION === tipo;
+                const matchBanco = !banco || item.BANCO === banco;
+                const matchEdad = !rangoEdad || item.RANGO_EDAD === rangoEdad;
+                const matchSearch = !search || 
+                    item.NOMBRE.toLowerCase().includes(search) || 
+                    item.DOCUMENTO.toString().includes(search);
+
+                return matchFondo && matchMnpio && matchTipo && matchBanco && matchEdad && matchSearch;
+            });
+
+            currentPage = 1;
+            updateKPIs();
+            updateCharts();
+            renderTable();
+        }
+
+        // Restablecer Filtros
+        function resetFilters() {
+            document.getElementById('filterFondo').value = '';
+            document.getElementById('filterMnpio').value = '';
+            document.getElementById('filterTipoPension').value = '';
+            document.getElementById('filterBanco').value = '';
+            document.getElementById('filterRangoEdad').value = '';
+            document.getElementById('filterSearch').value = '';
+            applyFilters();
+        }
+
+        // Formato Moneda
+        function formatCurrency(val) {
+            return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(val);
+        }
+
+        // Actualizar Tarjetas KPI
+        function updateKPIs() {
+            const totalCount = filteredData.length;
+            const totalValor = filteredData.reduce((acc, curr) => acc + curr.VAL_PENSIONES, 0);
+            const promedio = totalCount > 0 ? totalValor / totalCount : 0;
+            const totalDescuentos = filteredData.reduce((acc, curr) => acc + curr.VAL_DESCUENTOS + curr.VAL_EMBARGOS, 0);
+            const totalCupo = filteredData.reduce((acc, curr) => acc + curr.CUPO, 0);
+
+            document.getElementById('kpiCount').textContent = totalCount.toLocaleString('es-CO');
+            document.getElementById('kpiPercent').textContent = `${((totalCount / rawData.length) * 100).toFixed(1)}% del total`;
+            document.getElementById('kpiValorPensiones').textContent = formatCurrency(totalValor);
+            document.getElementById('kpiPromedioPension').textContent = formatCurrency(promedio);
+            document.getElementById('kpiDescuentos').textContent = formatCurrency(totalDescuentos);
+            document.getElementById('kpiCupo').textContent = formatCurrency(totalCupo);
+        }
+
+        // Renderizar y Actualizar Gráficos con Chart.js
+        function updateCharts() {
+            // Helper para contar frecuencias
+            const getCounts = (key) => {
+                const counts = {};
+                filteredData.forEach(item => {
+                    const k = item[key] || 'NO ESPECIFICADO';
+                    counts[k] = (counts[k] || 0) + 1;
+                });
+                return counts;
+            };
+
+            // Chart 1: Fondos
+            const dataFondo = getCounts('FONDO');
+            renderChart('chartFondo', 'doughnut', Object.keys(dataFondo), Object.values(dataFondo), [
+                '#3b82f6', '#10b981', '#6366f1', '#f59e0b', '#ec4899', '#8b5cf6', '#14b8a6'
+            ]);
+
+            // Chart 2: Top Municipios
+            const dataMnpio = getCounts('MNPIO');
+            const sortedMnpio = Object.entries(dataMnpio).sort((a,b) => b[1] - a[1]).slice(0, 5);
+            renderChart('chartMnpio', 'bar', sortedMnpio.map(e => e[0]), sortedMnpio.map(e => e[1]), '#3b82f6');
+
+            // Chart 3: Bancos
+            const dataBanco = getCounts('BANCO');
+            const sortedBanco = Object.entries(dataBanco).sort((a,b) => b[1] - a[1]).slice(0, 6);
+            renderChart('chartBanco', 'bar', sortedBanco.map(e => e[0]), sortedBanco.map(e => e[1]), '#6366f1', true);
+
+            // Chart 4: Edades
+            const orderEdades = ["Menor de 60", "60 - 70 años", "71 - 80 años", "81 - 90 años", "Mayor de 90"];
+            const dataEdad = getCounts('RANGO_EDAD');
+            const labelsEdad = orderEdades.filter(k => dataEdad[k] !== undefined);
+            const valuesEdad = labelsEdad.map(k => dataEdad[k]);
+            renderChart('chartEdad', 'pie', labelsEdad, valuesEdad, [
+                '#38bdf8', '#3b82f6', '#1d4ed8', '#1e40af', '#1e3a8a'
+            ]);
+        }
+
+        function renderChart(canvasId, type, labels, data, colors, isHorizontal = false) {
+            if (chartInstances[canvasId]) {
+                chartInstances[canvasId].destroy();
+            }
+
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            chartInstances[canvasId] = new Chart(ctx, {
+                type: type,
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Pensionados',
+                        data: data,
+                        backgroundColor: colors,
+                        borderRadius: type === 'bar' ? 6 : 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: isHorizontal ? 'y' : 'x',
+                    plugins: {
+                        legend: {
+                            display: type === 'pie' || type === 'doughnut',
+                            position: 'bottom',
+                            labels: { boxWidth: 12, font: { size: 11 } }
+                        }
+                    },
+                    scales: (type === 'bar') ? {
+                        y: { beginAtZero: true, grid: { display: false } },
+                        x: { grid: { display: false } }
+                    } : {}
+                }
+            });
+        }
+
+        // Paginación y Renderizado de Tabla
+        function renderTable() {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+
+            const start = (currentPage - 1) * pageSize;
+            const end = start + pageSize;
+            const pageRecords = filteredData.slice(start, end);
+
+            if (pageRecords.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="10" class="p-6 text-center text-gray-500 font-medium">No se encontraron registros que coincidan con los filtros.</td></tr>`;
+            } else {
+                pageRecords.forEach(item => {
+                    const tr = document.createElement('tr');
+                    tr.className = "hover:bg-slate-50 transition border-b border-gray-100";
+                    tr.innerHTML = `
+                        <td class="p-3 font-mono text-gray-600">${item.DOCUMENTO}</td>
+                        <td class="p-3 font-semibold text-slate-800">${item.NOMBRE}</td>
+                        <td class="p-3"><span class="px-2 py-0.5 text-[10px] font-semibold bg-blue-50 text-blue-700 rounded-full">${item.FONDO}</span></td>
+                        <td class="p-3">${item.MNPIO}</td>
+                        <td class="p-3 text-gray-600">${item.TIPO_PENSION}</td>
+                        <td class="p-3 text-gray-600">${item.BANCO}</td>
+                        <td class="p-3 text-center">${item.EDAD}</td>
+                        <td class="p-3 text-right font-medium text-slate-800">${formatCurrency(item.VAL_PENSIONES)}</td>
+                        <td class="p-3 text-right text-amber-600">${formatCurrency(item.VAL_DESCUENTOS + item.VAL_EMBARGOS)}</td>
+                        <td class="p-3 text-right font-semibold ${item.CUPO < 0 ? 'text-red-500' : 'text-emerald-600'}">${formatCurrency(item.CUPO)}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+
+            // Actualizar controles de paginación
+            const totalPages = Math.ceil(filteredData.length / pageSize) || 1;
+            document.getElementById('tableInfo').textContent = `Mostrando ${filteredData.length > 0 ? start + 1 : 0} a ${Math.min(end, filteredData.length)} de ${filteredData.length} registros`;
+            document.getElementById('pageIndicator').textContent = `Página ${currentPage} de ${totalPages}`;
+            document.getElementById('btnPrev').disabled = currentPage === 1;
+            document.getElementById('btnNext').disabled = currentPage === totalPages;
+        }
+
+        function nextPage() {
+            const totalPages = Math.ceil(filteredData.length / pageSize);
+            if (currentPage < totalPages) {
+                currentPage++;
+                renderTable();
+            }
+        }
+
+        function prevPage() {
+            if (currentPage > 1) {
+                currentPage--;
+                renderTable();
+            }
+        }
+
+        function changePageSize() {
+            pageSize = parseInt(document.getElementById('pageSize').value);
+            currentPage = 1;
+            renderTable();
+        }
+
+        // Exportar a CSV
+        function exportToCSV() {
+            if (filteredData.length === 0) {
+                alert("No hay datos para exportar.");
+                return;
+            }
+
+            const headers = ["DOCUMENTO", "NOMBRE", "FONDO", "MUNICIPIO", "TIPO_PENSION", "BANCO", "EDAD", "RANGO_EDAD", "VAL_PENSIONES", "VAL_SALUD", "VAL_EMBARGOS", "VAL_DESCUENTOS", "CUPO"];
+            const csvRows = [headers.join(',')];
+
+            filteredData.forEach(row => {
+                const values = [
+                    `"${row.DOCUMENTO}"`,
+                    `"${row.NOMBRE}"`,
+                    `"${row.FONDO}"`,
+                    `"${row.MNPIO}"`,
+                    `"${row.TIPO_PENSION}"`,
+                    `"${row.BANCO}"`,
+                    row.EDAD,
+                    `"${row.RANGO_EDAD}"`,
+                    row.VAL_PENSIONES,
+                    row.VAL_SALUD,
+                    row.VAL_EMBARGOS,
+                    row.VAL_DESCUENTOS,
+                    row.CUPO
+                ];
+                csvRows.push(values.join(','));
+            });
+
+            const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `FOPEP_Atlantico_Filtrado_${new Date().toISOString().slice(0,10)}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+</body>
+</html>
